@@ -1,3 +1,4 @@
+import { strict } from "assert";
 import { guessType } from ".";
 import {
     Argument,
@@ -125,10 +126,72 @@ function parseReturnFromDefinition(parameters: string[]): Returns | null {
         }
 
         // Skip "-> None" annotations
-        return match[2] === "None" ? null : { type: match[2] };
+        if (match[2] === "None") {
+            return null
+        } else {
+            return { type: parseHint(match[2]) }
+        }
+        // return match[2] === "None" ? null : { type: match[2] };
     }
 
     return null;
+}
+
+export function parseHint(hint: string): string {
+    const parent_pattern = /(['"\.\w]+)\[(.*)\]\]*/;
+
+    let result = "";
+    if (hint.includes("[")) {
+        const parent_match = hint.match(parent_pattern);
+
+        if (parent_match == null) {
+            return "";
+        }
+
+        let parent = parent_match[1].toLowerCase();
+        const child_match = parseChildren(parent_match[2])
+        if (parent === "dict") {
+            result += "dict mapping "
+            result += parseHint(child_match[0]) + " to "
+            result += parseHint(child_match[1])
+        } else {
+            result += parent + " of "
+            if (child_match.length == 2) {
+                result += parseHint(child_match[0]) + " and ";
+                result += parseHint(child_match[1]);
+            } else if (child_match.length == 1) {
+                result += parseHint(child_match[0])
+            } else {
+                for (const child of child_match.slice(0, -2)) {
+                    result += parseHint(child) + ", "
+                }
+                result += "and " + parseHint(child_match[-1])
+            }
+        }
+    } else {
+        var numUpper = hint.replace(/[^A-Z]/g, '').length;
+        if (numUpper > 1) result = hint;
+        else result = hint.toLowerCase();
+    }
+
+    return result;
+}
+
+function parseChildren(childrenString: string): string[] {
+    let result = [], item = '', depth = 0;
+    function push() { if (item) result.push(item); item = ''; }
+    for (let i = 0,  c; c = childrenString[i], i < childrenString.length; i++) {
+        if (c === ' ' && !depth) continue;
+        if (!depth && c === ',') push();
+        else {
+            item += c;
+            if (c === '[') depth++;
+            if (c ===']') depth--;
+        }
+    }
+
+    push();
+    return result;
 }
 
 function parseExceptions(body: string[]): Exception[] {

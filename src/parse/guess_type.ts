@@ -1,3 +1,5 @@
+import { parseHint } from ".";
+
 export function guessType(parameter: string): string {
     parameter = parameter.trim();
 
@@ -29,6 +31,8 @@ function getTypeFromTypeHint(parameter: string): string {
     // Remove enclosing quotes
     let type = typeHintRegex[1].trim();
     type = type.replace(/^['"]|['"]$/g, "");
+    type = parseHint(type);
+    type = "_return_name_ : " + type;
 
     return type;
 }
