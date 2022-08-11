@@ -165,10 +165,10 @@ export function parseHint(hint: string): string {
             } else if (child_match.length == 1) {
                 result += parseHint(child_match[0])
             } else {
-                for (const child of child_match.slice(0, -2)) {
+                for (const child of child_match.slice(0, -1)) {
                     result += parseHint(child) + ", "
                 }
-                result += "and " + parseHint(child_match[-1])
+                result += "and " + parseHint(child_match.slice(-1)[0]);
             }
         }
     } else {
