@@ -32,7 +32,6 @@ function getTypeFromTypeHint(parameter: string): string {
     let type = typeHintRegex[1].trim();
     type = type.replace(/^['"]|['"]$/g, "");
     type = parseHint(type);
-    type = "_return_name_ : " + type;
 
     return type;
 }

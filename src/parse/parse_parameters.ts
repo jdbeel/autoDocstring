@@ -1,3 +1,6 @@
+import * as vs from "vscode";
+import { extensionID } from "../constants";
+
 import { strict } from "assert";
 import { guessType } from ".";
 import {
@@ -129,9 +132,8 @@ function parseReturnFromDefinition(parameters: string[]): Returns | null {
         if (match[2] === "None") {
             return null
         } else {
-            return { type: parseHint(match[2]) }
+            return { type: "_return_name_ : " + parseHint(match[2]) }
         }
-        // return match[2] === "None" ? null : { type: match[2] };
     }
 
     return null;
@@ -139,6 +141,7 @@ function parseReturnFromDefinition(parameters: string[]): Returns | null {
 
 export function parseHint(hint: string): string {
     const parent_pattern = /(['"\.\w]+)\[(.*)\]\]*/;
+    let config = vs.workspace.getConfiguration(extensionID);
 
     let result = "";
     if (hint.includes("[")) {
@@ -152,7 +155,7 @@ export function parseHint(hint: string): string {
         const child_match = parseChildren(parent_match[2])
         if (parent === "dict") {
             result += "dict mapping "
-            result += parseHint(child_match[0]) + " to "
+            result += parseHint(child_match[0]) + config.get("dictMapString").toString()
             result += parseHint(child_match[1])
         } else {
             result += parent + " of "
@@ -230,5 +233,5 @@ function parseFromBody(body: string[], pattern: RegExp): Returns | Yields {
 }
 
 function isIterator(type: string): boolean {
-    return type.startsWith("Generator") || type.startsWith("Iterator");
+    return type.toLocaleLowerCase().startsWith("generator") || type.toLowerCase().startsWith("iterator");
 }

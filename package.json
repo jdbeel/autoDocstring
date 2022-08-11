@@ -135,6 +135,12 @@
                     ],
                     "scope": "window",
                     "description": "Output log information"
+                },
+                "autoDocstring.dictMapString": {
+                    "type": "string",
+                    "default": " -> ",
+                    "scope": "window",
+                    "description": "Separator for dictionaries in plain English. e.g. dict mapping str -> int"
                 }
             }
         }
