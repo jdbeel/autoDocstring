@@ -96,7 +96,7 @@ export class DocstringFactory {
         const snippetLines = snippet.split("\n");
 
         snippetLines.forEach((line, index) => {
-            if (line !== "") {
+            if (line.replace(" ", "") !== "") {
                 snippetLines[index] = indentation + line;
             }
         });

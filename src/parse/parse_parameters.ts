@@ -98,10 +98,14 @@ function parseReturns(parameters: string[], body: string[]): Return[] {
 
 function parseYields(parameters: string[], body: string[]): Yield[] {
     const returnType = parseReturnFromDefinition(parameters);
+    const yieldInBody = parseFromBody(body, /yield /);
 
-    if (returnType != null) {
+    if (returnType != null && yieldInBody != null) {
         return returnType as Yield[];
-    }
+    } else {
+        const emptyYield: Yield[] = [];
+        return emptyYield
+    } 
 }
 
 function parseReturnFromDefinition(parameters: string[]): Return[] | null {
@@ -120,8 +124,12 @@ function parseReturnFromDefinition(parameters: string[]): Return[] | null {
         } else {
             let return_types = parseHint(match[2], true);
             let returns = [];
-            for (const return_type of return_types) {
-                returns.push({type : return_type})
+            if (Array.isArray(return_types)){
+                for (const return_type of return_types) {
+                    returns.push({type : return_type})
+                }
+            } else {
+                returns.push({type : return_types})
             }
             return returns;
         }
@@ -145,7 +153,7 @@ export function parseHint(hint: string, is_return: boolean = false): string | st
         let parent = parent_match[1].toLowerCase();
         const child_match = parseChildren(parent_match[2])
 
-        if (is_return === true && parent === "tuple") {
+        if (is_return === true && (parent === "tuple" || parent === "iterable" || parent === "generator")) {
             let return_types = [];
             for (const child of child_match.slice(0, -1)) {
                 return_types.push(parseHint(child, false))
@@ -218,6 +226,16 @@ export function inArray<type>(item: type, array: type[]) {
     return array.some((x) => item === x);
 }
 
-function isIterator(type: string): boolean {
-    return type.toLocaleLowerCase().startsWith("generator") || type.toLowerCase().startsWith("iterator");
+function parseFromBody(body: string[], pattern: RegExp): Return | Yield {
+    for (const line of body) {
+        const match = line.match(pattern);
+
+        if (match == null) {
+            continue;
+        }
+
+        return { type: undefined };
+    }
+
+    return undefined;
 }

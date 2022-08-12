@@ -6,8 +6,8 @@ export interface DocstringParts {
     args: Argument[];
     kwargs: KeywordArgument[];
     exceptions: Exception[];
-    returns: Returns;
-    yields: Yields;
+    returns: Return[];
+    yields: Yield[];
 }
 
 export interface Decorator {
@@ -29,11 +29,11 @@ export interface Exception {
     type: string;
 }
 
-export interface Returns {
+export interface Return {
     type: string;
 }
 
-export interface Yields {
+export interface Yield {
     type: string;
 }
 
@@ -50,8 +50,12 @@ export function docstringPartsToString(docstringParts: DocstringParts): string {
     const exceptionsText = docstringParts.exceptions.length
         ? docstringParts.exceptions.map((exception) => `${exception.type}`).join("\n")
         : "N/A";
-    const returnsText = `${docstringParts.returns?.type ?? "N/A"}`;
-    const yieldsText = `${docstringParts.yields?.type ?? "N/A"}`;
+    const returnsText = docstringParts.returns.length
+        ? docstringParts.returns.map((_return) => `${_return.type}`).join("\n")
+        : "N/A";
+    const yieldsText = docstringParts.yields.length
+        ? docstringParts.yields.map((_yield) => `${_yield.type}`).join("\n")
+        : "N/A";
 
     return dedent`
     Docstring parts:

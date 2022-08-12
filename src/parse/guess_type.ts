@@ -4,6 +4,7 @@ export function guessType(parameter: string): string {
     parameter = parameter.trim();
 
     if (hasTypeHint(parameter)) {
+        // @ts-ignore
         return getTypeFromTypeHint(parameter);
     }
 
@@ -14,7 +15,7 @@ export function guessType(parameter: string): string {
     return guessTypeFromName(parameter);
 }
 
-function getTypeFromTypeHint(parameter: string): string {
+function getTypeFromTypeHint(parameter: string): string | string[] {
     const sections = parameter.split(":");
     if (sections.length !== 2) {
         return undefined;
@@ -31,6 +32,7 @@ function getTypeFromTypeHint(parameter: string): string {
     // Remove enclosing quotes
     let type = typeHintRegex[1].trim();
     type = type.replace(/^['"]|['"]$/g, "");
+    // @ts-ignore
     type = parseHint(type);
 
     return type;

@@ -6,8 +6,8 @@ import {
     DocstringParts,
     Exception,
     KeywordArgument,
-    Returns,
-    Yields,
+    Return,
+    Yield,
 } from "../docstring_parts";
 
 export class TemplateData {
@@ -16,8 +16,8 @@ export class TemplateData {
     public args: Argument[];
     public kwargs: KeywordArgument[];
     public exceptions: Exception[];
-    public returns: Returns;
-    public yields: Yields;
+    public returns: Return[];
+    public yields: Yield[];
 
     private includeName: boolean;
     private includeExtendedSummary: boolean;
@@ -96,11 +96,11 @@ export class TemplateData {
     }
 
     public returnsExist(): boolean {
-        return this.returns !== undefined;
+        return this.returns.length > 0;
     }
 
     public yieldsExist(): boolean {
-        return this.yields != undefined;
+        return this.yields.length > 0;
     }
 
     private removeTypes(): void {
@@ -112,12 +112,12 @@ export class TemplateData {
             kwarg.type = undefined;
         }
 
-        if (this.yieldsExist()) {
-            this.yields.type = undefined;
+        for (const _yield of this.yields) {
+            _yield.type = undefined;
         }
 
-        if (this.returnsExist()) {
-            this.returns.type = undefined;
+        for (const _return of this.returns) {
+            _return.type = undefined;
         }
     }
 
@@ -134,14 +134,16 @@ export class TemplateData {
             }
         }
 
-        const returns = this.returns;
-        if (returns !== undefined && returns.type === undefined) {
-            returns.type = placeholder;
+        for (const _return of this.returns) {
+            if (_return.type === undefined) {
+                _return.type = placeholder;
+            }
         }
 
-        const yields = this.yields;
-        if (yields != undefined && yields.type == undefined) {
-            yields.type = placeholder;
+        for (const _yield of this.yields) {
+            if (_yield.type === undefined) {
+                _yield.type = placeholder;
+            }
         }
     }
 }
