@@ -1,7 +1,5 @@
 {{! Numpy Docstring Template }}
 {{summaryPlaceholder}}
-
-{{extendedSummaryPlaceholder}}
 {{#parametersExist}}
 
 Parameters
@@ -11,8 +9,8 @@ Parameters
     {{descriptionPlaceholder}}
 {{/args}}
 {{#kwargs}}
-{{var}} : {{typePlaceholder}}, optional
-    {{descriptionPlaceholder}}, by default {{&default}}
+{{var}} : {{typePlaceholder}}, default {{&default}}
+    (Optional) {{descriptionPlaceholder}}
 {{/kwargs}}
 {{/parametersExist}}
 {{#returnsExist}}

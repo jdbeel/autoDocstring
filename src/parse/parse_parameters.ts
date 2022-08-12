@@ -155,7 +155,7 @@ export function parseHint(hint: string, is_return: boolean = false): string | st
 
         if (is_return === true && (parent === "tuple" || parent === "iterable" || parent === "generator")) {
             let return_types = [];
-            for (const child of child_match.slice(0, -1)) {
+            for (const child of child_match) {
                 return_types.push(parseHint(child, false))
             }
             return return_types
