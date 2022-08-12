@@ -9,8 +9,8 @@ import {
     DocstringParts,
     Exception,
     KeywordArgument,
-    Returns,
-    Yields,
+    Return,
+    Yield,
 } from "../docstring_parts";
 
 export function parseParameters(
@@ -23,7 +23,7 @@ export function parseParameters(
         decorators: parseDecorators(parameterTokens),
         args: parseArguments(parameterTokens),
         kwargs: parseKeywordArguments(parameterTokens),
-        returns: parseReturn(parameterTokens, body),
+        returns: parseReturns(parameterTokens, body),
         yields: parseYields(parameterTokens, body),
         exceptions: parseExceptions(body),
     };
@@ -90,35 +90,21 @@ function parseKeywordArguments(parameters: string[]): KeywordArgument[] {
     return kwargs;
 }
 
-function parseReturn(parameters: string[], body: string[]): Returns {
+function parseReturns(parameters: string[], body: string[]): Return[] {
     const returnType = parseReturnFromDefinition(parameters);
-
-    if (returnType == null || isIterator(returnType.type)) {
-        return parseFromBody(body, /return /);
-    }
 
     return returnType;
 }
 
-function parseYields(parameters: string[], body: string[]): Yields {
+function parseYields(parameters: string[], body: string[]): Yield[] {
     const returnType = parseReturnFromDefinition(parameters);
 
-    if (returnType != null && isIterator(returnType.type)) {
-        return returnType as Yields;
+    if (returnType != null) {
+        return returnType as Yield[];
     }
-
-    // To account for functions that yield but don't have a yield signature
-    const yieldType = returnType ? returnType.type : undefined;
-    const yieldInBody = parseFromBody(body, /yield /);
-
-    if (yieldInBody != null && yieldType != undefined) {
-        yieldInBody.type = `Iterator[${yieldType}]`;
-    }
-
-    return yieldInBody;
 }
 
-function parseReturnFromDefinition(parameters: string[]): Returns | null {
+function parseReturnFromDefinition(parameters: string[]): Return[] | null {
     const pattern = /^->\s*(["']?)(['"\w\[\], |\.]*)\1/;
 
     for (const param of parameters) {
@@ -130,16 +116,21 @@ function parseReturnFromDefinition(parameters: string[]): Returns | null {
 
         // Skip "-> None" annotations
         if (match[2] === "None") {
-            return null
+            return []
         } else {
-            return { type: "_return_name_ : " + parseHint(match[2]) }
+            let return_types = parseHint(match[2], true);
+            let returns = [];
+            for (const return_type of return_types) {
+                returns.push({type : return_type})
+            }
+            return returns;
         }
     }
 
-    return null;
+    return [];
 }
 
-export function parseHint(hint: string): string {
+export function parseHint(hint: string, is_return: boolean = false): string | string[] {
     const parent_pattern = /(['"\.\w]+)\[(.*)\]\]*/;
     let config = vs.workspace.getConfiguration(extensionID);
 
@@ -153,12 +144,21 @@ export function parseHint(hint: string): string {
 
         let parent = parent_match[1].toLowerCase();
         const child_match = parseChildren(parent_match[2])
+
+        if (is_return === true && parent === "tuple") {
+            let return_types = [];
+            for (const child of child_match.slice(0, -1)) {
+                return_types.push(parseHint(child, false))
+            }
+            return return_types
+        }
         if (parent === "dict") {
             result += "dict mapping "
             result += parseHint(child_match[0]) + config.get("dictMapString").toString()
             result += parseHint(child_match[1])
         } else {
-            result += parent + " of "
+            if (parent != "optional")
+                result += parent + " of "
             if (child_match.length == 2) {
                 result += parseHint(child_match[0]) + " and ";
                 result += parseHint(child_match[1]);
@@ -216,20 +216,6 @@ function parseExceptions(body: string[]): Exception[] {
 
 export function inArray<type>(item: type, array: type[]) {
     return array.some((x) => item === x);
-}
-
-function parseFromBody(body: string[], pattern: RegExp): Returns | Yields {
-    for (const line of body) {
-        const match = line.match(pattern);
-
-        if (match == null) {
-            continue;
-        }
-
-        return { type: undefined };
-    }
-
-    return undefined;
 }
 
 function isIterator(type: string): boolean {
